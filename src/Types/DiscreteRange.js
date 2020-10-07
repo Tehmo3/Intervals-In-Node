@@ -21,15 +21,15 @@ class DiscreteRange extends Range {
     super(settings);
     this.step = step;
     let lb = this.lower;
-    if (this.lower && !this.lowerInc) {
+    if (this.lower !== null && !this.lowerInc) {
       lb = this.next(lb);
     }
 
     let ub = this.upper;
-    if (this.upper && this.upperInc) {
+    if (this.upper !== null && this.upperInc) {
       ub = this.next(ub, this.step, settings.type);
     }
-    if (this.lower && this.upper && lb >= ub) {
+    if (this.lower !== null && this.upper !== null && lb >= ub) {
       this._range = _emptyInternalRange;
       this.replace({ upper: null, lower: null, lowerInc: false, upperInc: false });
     } else {

@@ -101,6 +101,9 @@ describe('Basic Range Functionality', function() {
     assert(!IntRange.endsBefore(-10));
     assert(IntRange.endsBefore(IntRangeUnbounded));
     assert(!IntRangeNoUB.endsBefore(endsBeforeRange));
+    // zero upper bounds
+    assert(!new range.IntRange({upper: 0}).endsBefore(new range.IntRange({upper: 0})));
+    assert(new range.IntRange({upper: 0}).endsBefore(new range.IntRange({upper: 0, upperInc: true})));
     expect(() => IntRange.endsBefore('a')).to.throw(Error);
   });
 
@@ -122,6 +125,9 @@ describe('Basic Range Functionality', function() {
     assert(!IntRange.contains(IntRangeUnbounded));
 
     expect(() => IntRange.contains('a')).to.throw(Error);
+
+    assert(!new range.IntRange({upper: 10}).contains(10));
+    assert(new range.IntRange({upper: 10, upperInc: true}).contains(10));
   });
 
 
@@ -176,6 +182,37 @@ describe('Basic Range Functionality', function() {
     expect(() => IntRange.union(IntRange2)).to.throw(Error);
 
     expect(() => IntRange.union(1)).to.throw(Error);
+
+    // unbounded union
+    expect(new range.IntRange({lower: 0, upper: 20}).union(new range.IntRange({lower: 10})))
+        .to.eql(new range.IntRange({lower: 0}));
+    expect(new range.IntRange({lower: 10}).union(new range.IntRange({lower: 0, upper: 20})))
+        .to.eql(new range.IntRange({lower: 0}));
+    expect(new range.IntRange({lower: 0, upper: 20}).union(new range.IntRange({upper: 10})))
+        .to.eql(new range.IntRange({upper: 20}));
+    expect(new range.IntRange({upper: 10}).union(new range.IntRange({lower: 0, upper: 20})))
+        .to.eql(new range.IntRange({upper: 20}));
+
+    expect(new range.IntRange({lower: 10, upper: 20}).union(new range.IntRange({lower: 0})))
+        .to.eql(new range.IntRange({lower: 0}));
+    expect(new range.IntRange({lower: 0}).union(new range.IntRange({lower: 10, upper: 20})))
+        .to.eql(new range.IntRange({lower: 0}));
+    expect(new range.IntRange({lower: 0, upper: 10}).union(new range.IntRange({upper: 20})))
+        .to.eql(new range.IntRange({upper: 20}));
+    expect(new range.IntRange({upper: 20}).union(new range.IntRange({lower: 0, upper: 10})))
+        .to.eql(new range.IntRange({upper: 20}));
+
+    expect(new range.IntRange({lower: 10}).union(new range.IntRange({lower: 20})))
+        .to.eql(new range.IntRange({lower: 10}));
+    expect(new range.IntRange({lower: 20}).union(new range.IntRange({lower: 10})))
+        .to.eql(new range.IntRange({lower: 10}));
+    expect(new range.IntRange({upper: 10}).union(new range.IntRange({upper: 20})))
+        .to.eql(new range.IntRange({upper: 20}));
+    expect(new range.IntRange({upper: 20}).union(new range.IntRange({upper: 10})))
+        .to.eql(new range.IntRange({upper: 20}));
+
+    expect(new range.IntRange({lower: 10}).union(new range.IntRange({upper: 20})))
+        .to.eql(new range.IntRange({}));
   });
 
 
@@ -226,6 +263,14 @@ describe('Basic Range Functionality', function() {
 
     assert(IntRange.difference(IntRange2).upper === 20);
     expect(() => IntRange.difference(1)).to.throw(Error);
+
+    expect(new range.IntRange({upper: 10}).difference(new range.IntRange({upper: 5}))
+        .isEqual(new range.IntRange({lower: 5, upper: 10})));
+
+    expect(new range.IntRange({lower: 5}).difference(new range.IntRange({lower: 10}))
+        .isEqual(new range.IntRange({lower: 5, upper: 10})));
+
+    assert(new range.IntRange({upper: 5}).difference(new range.IntRange({upper: 10})).isEmpty);
   });
 
 
@@ -253,6 +298,9 @@ describe('Basic Range Functionality', function() {
 
     IntRange2.replace({lower: 3});
     assert(!IntRange.leftOf(IntRange2));
+
+    // zero bounds
+    assert(new range.IntRange({upper: 0}).leftOf(IntRange));
 
     expect(() => IntRange.leftOf(1)).to.throw(Error);
   });

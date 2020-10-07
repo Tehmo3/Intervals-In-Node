@@ -217,13 +217,10 @@ class Range {
   */
   contains(other) {
     if (this.isValidRange(other)) {
-      if ((!other || other.startsAfter(this)) && other.endsBefore(this)) {
-        return true;
-      }
-      return false;
+      return !this.startsAfter(other) && !this.endsBefore(other);
     } else if (this.isValidScalar(other)) {
       let isInLower = true;
-      if (this.lower) {
+      if (this.lower !== null) {
         isInLower = (this.lower < other);
         if (this.lowerInc) {
           isInLower = this.lower <= other;
@@ -231,8 +228,11 @@ class Range {
       }
 
       let isInUpper = true;
-      if (this.upper) {
-        isInUpper = (this.upper >= other);
+      if (this.upper !== null) {
+        isInUpper = (this.upper > other);
+        if (this.upperInc) {
+          isInUpper = (this.upper >= other);
+        }
       }
       return isInLower && isInUpper;
     }
@@ -279,7 +279,7 @@ class Range {
       b = this;
     }
 
-    if (!a.upper || !b.lower) {
+    if (a.upper === null || b.lower === null) {
       return true;
     }
     return a.upper > b.lower || (a.upper === b.lower && a.upperInc && b.lowerInc);
@@ -331,7 +331,7 @@ class Range {
       b = this;
     }
 
-    if (a.upper <= b.lower && !a.adjacent(b)) {
+    if (!a.overlap(b) && !a.adjacent(b)) {
       throw new Error('Ranges must be either adjacent or overlapping');
     }
 
@@ -340,6 +340,9 @@ class Range {
     if (a.upper === b.upper) {
       upper = a.upper;
       upperInc = a.upperInc || b.upperInc;
+    } else if (a.upper === null || b.upper === null) {
+      upper = null;
+      upperInc = false;
     } else if (a.upper < b.upper) {
       upper = b.upper;
       upperInc = b.upperInc;
@@ -378,7 +381,7 @@ class Range {
       throw new Error('Other range must not be within this range');
     } else if (this.endsBefore(other)) {
       return this.copy().replace({ upper: other.lower, upperInc: !other.lowerInc });
-    } else if (this.startsAfter(other)) {
+    } else if (this.startsAfter(other) || this.startsWith(other)) {
       return this.copy().replace({ lower: other.upper, lowerInc: !other.upperInc });
     }
     return this.copy().empty();
@@ -464,7 +467,7 @@ class Range {
   startsAfter(other) {
     if (this.isValidRange(other)) {
       if (this.lower === other.lower) {
-        return other.lowerInc || !this.lowerInc;
+        return other.lowerInc && !this.lowerInc;
       } else if (this.lower === null) {
         return false;
       } else if (other.lower === null) {
@@ -486,10 +489,10 @@ class Range {
   endsBefore(other) {
     if (this.isValidRange(other)) {
       if (this.upper === other.upper) {
-        return other.upperInc || !this.upperInc;
-      } else if (!this.upper) {
+        return other.upperInc && !this.upperInc;
+      } else if (this.upper === null) {
         return false;
-      } else if (!other.upper) {
+      } else if (other.upper === null) {
         return true;
       }
       return this.upper <= other.upper;

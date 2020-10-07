@@ -164,6 +164,7 @@ class RangeSet {
 
             if (this._list[i].isEmpty) {
               this._list.splice(i, 1);
+              continue; // don't i+1 as we just removed an item
             }
           } catch (e) {
             const one = r.copy();
@@ -200,6 +201,7 @@ class RangeSet {
 
       if (r.overlap(item) || r.adjacent(item)) {
         buffer.push(this._list.splice(i, 1)[0]);
+        continue; // skip the i+1 as we just removed an item
       } else if (item.leftOf(r)) {
         if (buffer.length === 0) {
           this._list.splice(i, 0, item);
